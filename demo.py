@@ -40,13 +40,13 @@ async def main():
         await trio.sleep(3)
         
         print("\n" + "="*50)
-        print("💡 TERMINAL INTERATIVO DO PESQUISADOR (HOSPITAL B)")
+        print("TERMINAL INTERATIVO DO PESQUISADOR (HOSPITAL B)")
         print("Digite 'sair' para encerrar a malha.")
         print("="*50 + "\n")
         
         while True:
             # Lê o input do usuário sem bloquear o trio
-            pergunta = await trio.to_thread.run_sync(input, "👨‍⚕️ [Você - Hosp. B]: ")
+            pergunta = await trio.to_thread.run_sync(input, "[Pesquisador - Hospital B]: ")
             if pergunta.strip().lower() in ['sair', 'exit', 'quit']:
                 break
                 
