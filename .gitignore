@@ -1,0 +1,16 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Banco de dados vetoriais locais (ChromaDB)
+data/
+*.chroma/
+
+# Variáveis de ambiente
+.env
+
+# Logs
+*.log

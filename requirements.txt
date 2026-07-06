@@ -1,0 +1,14 @@
+langchain
+langchain-community
+langchain-chroma
+langchain-ollama
+chromadb
+requests
+presidio-analyzer
+presidio-anonymizer
+spacy
+opendp
+pydantic
+libp2p
+trio
+multiaddr
