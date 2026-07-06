@@ -1,45 +1,60 @@
 # Federated Science Architecture (Local-First P2P)
 
-Este projeto implementa uma Arquitetura Federada de Produção focada em Privacidade para dados médicos e científicos.
-As comunicações ocorrem de forma 100% descentralizada (P2P Mesh via libp2p TCP Multiplexed streams), RAG local usando LangChain + Ollama, e anonimização rigorosa via Microsoft Presidio (NER).
+## 📌 Visão Geral
+Este repositório contém a implementação definitiva de uma Arquitetura Federada focada em Privacidade para análise de dados médicos e científicos. A solução foi projetada sob o paradigma "Local-First", garantindo que os dados sensíveis nunca precisem trafegar para servidores centralizados.
 
-## 🚀 Como Iniciar a Rede Mesh P2P
+As comunicações e a consolidação do conhecimento inter-hospitalar ocorrem de forma 100% descentralizada (P2P Mesh) utilizando streams TCP multiplexados via `libp2p`. O projeto integra inteligência artificial generativa (RAG) para consulta de sintomas e prontuários, acoplada a uma camada rigorosa de higienização de dados (NER) via Microsoft Presidio e Privacidade Diferencial (OpenDP).
 
-Ao invés de rodarmos servidores HTTP ou APIs REST centralizadas, levantaremos Nós em uma malha criptografada P2P nativa, garantindo que os dados viajem anonimizados diretamente de nó para nó.
+## 🛠️ Tecnologias Utilizadas
+- **Comunicação Descentralizada:** `libp2p` (TCP Multiplexing), `Trio` (Assincronicidade).
+- **Inteligência Artificial (RAG):** `LangChain`, `Ollama` (LLaMA 3), `ChromaDB`.
+- **Privacy Shield:** `Microsoft Presidio` (Anonimização via NER - Spacy), `OpenDP` (Privacidade Diferencial).
 
-### 1. Preparar a Base (Obrigatório)
+## 🏗️ Arquitetura do Sistema
 
-Primeiro, instale as dependências Python:
+1. **Nós Descentralizados (Hospitais):** Cada nó opera de forma independente em um ambiente seguro, contendo sua própria base de dados vetorial e motor RAG.
+2. **Privacy Shield:** Antes de qualquer requisição ser distribuída para a rede, o Microsoft Presidio analisa a string e remove quaisquer Informações de Identificação Pessoal (PII).
+3. **P2P Mesh Network:** A conexão inter-institucional dispensa APIs REST tradicionais, utilizando a infraestrutura peer-to-peer criptografada do `libp2p`.
+4. **Mecanismo de Tolerância a Falhas:** Caso o motor de inferência local (Ollama) falhe por limitações de hardware (ex: ausência de instruções AVX), a camada de rede se mantém resiliente através de um fallback responsivo, garantindo o uptime do ecossistema federado.
+
+## ⚙️ Pré-requisitos e Instalação
+
+O ambiente requer Python instalado, além do modelo de IA local configurado.
+
+1. Instale as dependências fundamentais do Python:
 ```powershell
 pip install -r requirements.txt
 ```
 
-Para o sistema de anonimização (Privacy Shield / NER) funcionar, baixe o pacote do idioma português:
+2. Baixe o modelo linguístico do Spacy (PT-BR) para ativar o motor de higienização de dados (NER):
 ```powershell
 python -m spacy download pt_core_news_sm
 ```
 
-Instale o [Ollama](https://ollama.com/download) (necessário suporte a AVX) e rode `ollama run llama3` no terminal em segundo plano.
+3. Instale o modelo generativo local via [Ollama](https://ollama.com/) (requer suporte de hardware compatível). Deixe o serviço rodando em segundo plano:
+```powershell
+ollama run llama3
+```
 
-### 2. Rodar a Simulação Interativa (Orquestrador)
+## 🚀 Como Executar
 
-Nós preparamos um script `demo.py` que sobe automaticamente dois Hospitais (Nó A e Nó B), conecta as redes e abre um terminal para você interagir.
+O projeto inclui um script orquestrador de demonstração que inicializa instâncias múltiplas (Nó A e Nó B), formata a malha de rede, e disponibiliza o terminal de consulta.
 
-No seu terminal, rode:
+Inicie a aplicação:
 ```powershell
 python demo.py
 ```
 
-### 3. Consultando a Malha (Terminal P2P)
+### 💻 Interagindo com o Terminal Federado
+Ao rodar a malha, você obterá acesso ao prompt interativo do Pesquisador:
+```text
+👨‍⚕️ [Você - Hosp. B]:
+```
+Digite sintomas ou dúvidas clínicas (ex: *"paciente masculino relata dores crônicas na lombar"*). 
 
-O próprio terminal exibirá:
-`👨‍⚕️ [Você - Hosp. B]:`
-
-Digite qualquer sintoma ou dúvida médica. O sistema irá:
-1. Buscar no banco de dados vetorial local (RAG / ChromaDB).
-2. Se não encontrar o suficiente, o **Presidio** higieniza sua frase (retirando qualquer dado pessoal).
-3. Envia o dado anonimizado via TCP stream (`libp2p`) para os outros hospitais na malha (ex: Nó A).
-4. O Nó A responde sem saber quem é o paciente.
-5. Você recebe a resposta consolidada na sua tela.
-
-*Nota: Se a sua máquina local não suportar a inferência pesada do LLaMA 3, o sistema de Inteligência Artificial entrará em modo Fallback e responderá normalmente à requisição P2P para garantir o uptime da rede.*
+**Fluxo de Processamento:**
+1. A rede consultará os bancos vetoriais locais (RAG).
+2. Se necessário, os sintomas são higienizados (remoção de entidades sensíveis).
+3. A query anônima trafega pelo túnel TCP criptografado.
+4. Outros nós da malha processam o raciocínio clínico com seus próprios LLMs.
+5. A resposta consolidada retorna de forma federada ao pesquisador inicial.
