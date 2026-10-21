@@ -1,7 +1,36 @@
 # Federated Science Architecture (Local-First P2P)
 
+> **Protótipo experimental, não homologado para prontuários ou uso clínico.**
+> NER pode deixar de detectar identificadores. Criptografia de transporte e
+> substituição de entidades não garantem anonimização nem conformidade legal.
+
+## Limites e bloqueio de falhas
+
+As consultas são sanitizadas antes de abrir uma conexão P2P. Respostas de
+qualquer handler passam pela proteção na saída do stream. Se o modelo português,
+o sanitizador ou o mecanismo de ruído falhar, a operação é bloqueada; o original
+não é usado como fallback. A ingestão também para antes de gerar embeddings se
+a sanitização falhar. Texto de entrada, saída e contagens brutas não são usados
+como mensagens de diagnóstico desses mecanismos.
+
+O mecanismo de ruído cobre apenas respostas constituídas por uma contagem
+inteira não negativa, sob a hipótese de sensibilidade 1. Texto livre passa por
+NER, **não por privacidade diferencial**. Não existe orçamento acumulado de
+privacidade, controle institucional de peers ou avaliação formal de anonimização
+neste protótipo. Não use dados reais. A resposta de demonstração do RAG em falhas
+continua sendo simulada, não evidência clínica.
+
+Regressões isoladas, com motores e transporte simulados:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Esses testes verificam o bloqueio das falhas e os pontos de exportação; não
+homologam o modelo NER, OpenDP, libp2p ou a qualidade das respostas médicas.
+
 ## Visao Geral
-Este repositorio contem a implementacao definitiva de uma Arquitetura Federada focada em Privacidade para analise de dados medicos e cientificos. A solucao foi projetada sob o paradigma "Local-First", garantindo que os dados sensiveis nunca precisem trafegar para servidores centralizados.
+Este repositorio explora uma arquitetura federada experimental para analise local de dados sinteticos medicos e cientificos, sob o paradigma "Local-First".
 
 As comunicacoes e a consolidacao do conhecimento inter-hospitalar ocorrem de forma 100% descentralizada (P2P Mesh) utilizando streams TCP multiplexados via `libp2p`. O projeto integra inteligencia artificial generativa (RAG) para consulta de sintomas e prontuarios, acoplada a uma camada rigorosa de higienizacao de dados (NER) via Microsoft Presidio e Privacidade Diferencial (OpenDP).
 

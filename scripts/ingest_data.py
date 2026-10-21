@@ -15,11 +15,9 @@ def ingest_text(text: str, db_dir: str):
     Obrigatoriamente aplica o NER Sanitizer ANTES de converter para embedding.
     """
     print("-" * 50)
-    print(f"Texto Original (COMPROMETEDOR):\n{text}\n")
     
     # 1. Privacy Shield: Sanitização
     safe_text = sanitize_text(text)
-    print(f"Texto Sanitizado (SEGURO PARA DB):\n{safe_text}\n")
     
     # 2. Quebra de Texto
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
