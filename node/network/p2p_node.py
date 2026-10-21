@@ -1,11 +1,28 @@
 import trio
+import re
 from libp2p import new_host
 from libp2p.network.stream.net_stream import INetStream
 from libp2p.crypto.rsa import create_new_key_pair
 from libp2p.peer.peerinfo import info_from_p2p_addr
 from multiaddr import Multiaddr
+from ..privacy.sanitizer import sanitize_text
+from ..privacy.differential import add_noise
+from ..privacy.errors import PrivacyProtectionError
 
 PROTOCOL_ID = "/med-federated/1.0.0"
+PRIVACY_BLOCKED = "[Consulta bloqueada: proteção de privacidade indisponível.]"
+
+
+def protect_response(response: str) -> str:
+    if not isinstance(response, str):
+        raise PrivacyProtectionError("Resposta inválida.")
+    # A DP existente cobre contagens inteiras, não números em prosa.
+    if re.fullmatch(r"[0-9]+", response.strip()):
+        try:
+            return str(add_noise(int(response.strip()), epsilon=0.5))
+        except (ValueError, OverflowError):
+            raise PrivacyProtectionError("Contagem inválida.") from None
+    return sanitize_text(response)
 
 class FederatedP2PNode:
     """
@@ -38,14 +55,17 @@ class FederatedP2PNode:
                 read_bytes += chunk
                 
             query_str = read_bytes.decode('utf-8')
-            print(f"[P2P] Query recebida: {query_str}")
             
             # Processa usando o handler injetado (Syft Orchestrator)
-            response_str = query_handler(query_str)
-            
-            # Devolve a resposta sintetizada/anonimizada
-            await stream.write(response_str.encode('utf-8') + b'\n')
-            await stream.close()
+            try:
+                # Protege a saída de qualquer handler antes da escrita no stream.
+                response_str = protect_response(query_handler(query_str))
+            except PrivacyProtectionError:
+                response_str = PRIVACY_BLOCKED
+            try:
+                await stream.write(response_str.encode('utf-8') + b'\n')
+            finally:
+                await stream.close()
             
         self.host.set_stream_handler(PROTOCOL_ID, stream_handler)
         
@@ -66,6 +86,11 @@ class FederatedP2PNode:
         """
         Envia uma query RAG anonimizada para outro nó da malha P2P.
         """
+        # Nenhuma conexão ou escrita ocorre se a sanitização falhar.
+        try:
+            safe_query = sanitize_text(query_text)
+        except PrivacyProtectionError:
+            return PRIVACY_BLOCKED
         # Extrai ID do Peer e Maddr
         maddr = Multiaddr(peer_maddr_str)
         info = info_from_p2p_addr(maddr)
@@ -77,7 +102,7 @@ class FederatedP2PNode:
             stream = await self.host.new_stream(info.peer_id, [PROTOCOL_ID])
             
             # Escreve a requisição com quebra de linha
-            await stream.write(query_text.encode('utf-8') + b'\n')
+            await stream.write(safe_query.encode('utf-8') + b'\n')
             
             # Aguarda a resposta (lê até quebra de linha)
             read_bytes = b""
@@ -89,5 +114,5 @@ class FederatedP2PNode:
                 
             await stream.close()
             return read_bytes.decode('utf-8')
-        except Exception as e:
-            return f"[Erro P2P]: {e}"
+        except Exception:
+            return "[Erro P2P: consulta não concluída.]"
