@@ -32,7 +32,7 @@ homologam o modelo NER, OpenDP, libp2p ou a qualidade das respostas médicas.
 ## Visao Geral
 Este repositorio explora uma arquitetura federada experimental para analise local de dados sinteticos medicos e cientificos, sob o paradigma "Local-First".
 
-As comunicacoes e a consolidacao do conhecimento inter-hospitalar ocorrem de forma 100% descentralizada (P2P Mesh) utilizando streams TCP multiplexados via `libp2p`. O projeto integra inteligencia artificial generativa (RAG) para consulta de sintomas e prontuarios, acoplada a uma camada rigorosa de higienizacao de dados (NER) via Microsoft Presidio e Privacidade Diferencial (OpenDP).
+As comunicacoes e a consolidacao do conhecimento inter-hospitalar ocorrem de forma 100% descentralizada (P2P Mesh) utilizando streams TCP multiplexados via `libp2p`. O projeto integra inteligencia artificial generativa (RAG) para consulta de sintomas e prontuarios, acoplada a uma camada experimental de deteccao de entidades (NER) via Microsoft Presidio e ruido para contagens via OpenDP.
 
 ## Tecnologias Utilizadas
 - Comunicação Descentralizada: `libp2p` (TCP Multiplexing), `Trio` (Assincronicidade).
@@ -41,10 +41,10 @@ As comunicacoes e a consolidacao do conhecimento inter-hospitalar ocorrem de for
 
 ## Arquitetura do Sistema
 
-1. Nos Descentralizados (Hospitais): Cada no opera de forma independente em um ambiente seguro, contendo sua propria base de dados vetorial e motor RAG.
-2. Privacy Shield: Antes de qualquer requisicao ser distribuida para a rede, o Microsoft Presidio analisa a string e remove quaisquer Informacoes de Identificacao Pessoal (PII).
+1. Nos Descentralizados (Hospitais): Cada no opera de forma independente em seu ambiente local, contendo sua propria base de dados vetorial e motor RAG. O isolamento e a seguranca operacional precisam ser configurados e avaliados separadamente.
+2. Privacy Shield: Antes de qualquer requisicao ser distribuida para a rede, o Microsoft Presidio analisa a string e substitui entidades detectadas. Identificadores nao reconhecidos podem permanecer no texto.
 3. P2P Mesh Network: A conexao inter-institucional dispensa APIs REST tradicionais, utilizando a infraestrutura peer-to-peer criptografada do `libp2p`.
-4. Mecanismo de Tolerancia a Falhas: Caso o motor de inferencia local (Ollama) falhe por limitacoes de hardware (ex: ausencia de instrucoes AVX), a camada de rede se mantem resiliente atraves de um fallback responsivo, garantindo o uptime do ecossistema federado.
+4. Mecanismo de Tolerancia a Falhas: Caso o motor de inferencia local (Ollama) falhe por limitacoes de hardware (ex: ausencia de instrucoes AVX), a camada de rede se mantem resiliente atraves de um fallback responsivo, produzindo uma resposta simulada. Isso nao comprova disponibilidade do sistema nem resposta clinica valida.
 
 ## Pre-requisitos e Instalacao
 
@@ -87,3 +87,7 @@ Fluxo de Processamento:
 3. A query anonima trafega pelo tunel TCP criptografado P2P.
 4. Outros nos da malha processam o raciocinio clinico com seus respectivos LLMs.
 5. A resposta consolidada retorna de forma federada ao nodo solicitante.
+
+## Verificação contínua
+
+A [CI](.github/workflows/ci.yml) usa Python 3.12 e executa os testes isolados com a biblioteca padrão, sem baixar modelos nem acessar dados clínicos. Alterações em sanitização, ruído ou transporte devem preservar os testes de bloqueio e de tráfego legítimo. Integrações reais continuam exigindo um ambiente separado com dados sintéticos.
