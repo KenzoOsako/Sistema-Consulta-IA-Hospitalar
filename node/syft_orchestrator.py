@@ -2,8 +2,6 @@ import os
 import trio
 from .network.p2p_node import FederatedP2PNode
 from .rag_engine import query_local_rag
-from .privacy.sanitizer import sanitize_text
-from .privacy.differential import add_noise
 
 class AntigravityOrchestrator:
     """
@@ -24,16 +22,8 @@ class AntigravityOrchestrator:
         Aqui reside o Privacy Shield (Privacidade Diferencial).
         """
         print(f"[Orchestrator] Processando query remota P2P...")
-        answer = query_local_rag(query_text)
-        
-        # Privacy Shield: Differential Privacy
-        if answer.strip().isdigit():
-            val = int(answer.strip())
-            noisy_val = add_noise(val, epsilon=0.5)
-            print(f"[Privacy Shield] Ruído DP aplicado. Real: {val}, Informado à rede: {noisy_val}")
-            answer = str(noisy_val)
-            
-        return answer
+        # A camada P2P aplica a proteção imediatamente antes de exportar a resposta.
+        return query_local_rag(query_text)
         
     async def start(self):
         # Inicia a rede libp2p passando o manipulador RAG local
@@ -53,11 +43,7 @@ class AntigravityOrchestrator:
         # 2. Busca Federada
         if self.peer_maddr:
             print("[Orchestrator] Enviando consulta para a Malha P2P Federada...")
-            # Sanitiza a query (NER - Remoção de Nomes) ANTES de ir para a rede
-            safe_query = sanitize_text(query_text)
-            print(f"[Privacy Shield] Dado anonimizado na rede: '{safe_query}'")
-            
-            p2p_ans = await self.p2p_node.query_peer(self.peer_maddr, safe_query)
+            p2p_ans = await self.p2p_node.query_peer(self.peer_maddr, query_text)
             print(f"\n[Conhecimento Federado (Outros Hospitais)]\n{p2p_ans}\n")
 
 async def main():

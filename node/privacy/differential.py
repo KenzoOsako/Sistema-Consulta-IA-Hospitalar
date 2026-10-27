@@ -1,39 +1,30 @@
-import opendp.prelude as dp
+import math
 
-# Habilita features experimentais/contrib do OpenDP
-try:
-    dp.enable_features("contrib")
-except Exception as e:
-    print(f"Aviso: OpenDP não inicializou corretamente. {e}")
+from .errors import PrivacyProtectionError
+
 
 def add_noise(value: int, epsilon: float = 1.0) -> int:
-    """
-    Adiciona ruído Diferencialmente Privado a uma contagem (agregação).
-    Usamos o mecanismo de Laplace discreto para valores inteiros.
-    
-    A Sensibilidade é 1 (a adição ou remoção de um paciente altera a contagem em 1).
-    O Scale do ruído = Sensibilidade / Epsilon.
-    """
+    """Perturba uma contagem com sensibilidade 1; erros não liberam o original."""
+    if type(value) is not int or value < 0:
+        raise PrivacyProtectionError("Contagem inválida.")
+    if not isinstance(epsilon, (int, float)) or isinstance(epsilon, bool):
+        raise PrivacyProtectionError("Epsilon inválido.")
+    if not math.isfinite(epsilon) or epsilon <= 0:
+        raise PrivacyProtectionError("Epsilon inválido.")
     try:
-        # Define o domínio e a métrica
+        import opendp.prelude as dp
+
+        dp.enable_features("contrib")
         space = dp.atom_domain(T=int), dp.absolute_distance(T=int)
-        
-        # Cria o mecanismo
-        scale = 1.0 / epsilon
-        meas = space >> dp.m.then_base_discrete_laplace(scale=scale)
-        
-        # Aplica o ruído e garante que não seja negativo (para contagens reais)
-        noisy_value = meas(value)
-        return max(0, noisy_value)
-    except Exception as e:
-        print(f"Erro ao aplicar Privacidade Diferencial: {e}")
-        return value
+        measurement = space >> dp.m.then_base_discrete_laplace(scale=1.0 / epsilon)
+        result = measurement(value)
+        if type(result) is not int:
+            raise ValueError("Resultado inválido")
+        return max(0, result)
+    except Exception:
+        raise PrivacyProtectionError("Privacidade diferencial indisponível; operação bloqueada.") from None
+
 
 def apply_dp_to_text(text: str) -> str:
-    """
-    Função utilitária que poderia ler um texto, extrair números e injetar ruído.
-    No nosso MVP, o DP será aplicado primariamente nos endpoints numéricos agregados.
-    Se a resposta for puramente textual descritiva, o LLM a gera, mas números 
-    são passados por add_noise().
-    """
-    return text
+    """Não há mecanismo de privacidade diferencial de texto livre implementado."""
+    raise PrivacyProtectionError("Privacidade diferencial de texto livre não implementada.")
