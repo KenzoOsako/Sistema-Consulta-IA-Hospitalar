@@ -9,6 +9,7 @@ from langchain_core.prompts import PromptTemplate
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 MODEL_NAME = os.getenv("MODEL_NAME", "llama3")
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./data/chroma_db")
+RAG_UNAVAILABLE = "[Consulta indisponível: motor de inferência local não respondeu.]"
 
 def get_llm():
     return Ollama(
@@ -29,7 +30,18 @@ def get_vector_db():
     )
 
 def query_local_rag(query_text: str) -> str:
-    """Executa a consulta na base local do hospital"""
+    """Executa a consulta ou devolve indisponibilidade, nunca conteúdo inventado."""
+    try:
+        answer = _query_local_rag(query_text)
+        if not isinstance(answer, str):
+            raise ValueError("Resultado de inferência inválido")
+        return answer
+    except Exception:
+        # Exceções de terceiros podem incluir entrada/contexto; não registrá-las.
+        return RAG_UNAVAILABLE
+
+
+def _query_local_rag(query_text: str) -> str:
     db = get_vector_db()
     llm = get_llm()
     
@@ -57,11 +69,5 @@ def query_local_rag(query_text: str) -> str:
         chain_type_kwargs={"prompt": PROMPT}
     )
     
-    try:
-        # Langchain changed `__call__` to `invoke` in recent versions
-        res = qa_chain.invoke({"query": query_text})
-        return res['result']
-    except Exception as e:
-        print(f"Erro no RAG local (Ollama offline/crash): {e}")
-        print("\n[FALLBACK DE SIMULAÇÃO] Como o motor nativo Ollama não tem suporte de hardware nesta máquina (AVX/Memória), injetando resposta médica simulada para demonstrar a malha P2P...")
-        return "O medicamento experimental X-Treme causou dores de cabeça severas em 14 pacientes na nossa unidade."
+    res = qa_chain.invoke({"query": query_text})
+    return res['result']

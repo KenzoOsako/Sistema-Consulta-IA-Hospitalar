@@ -17,8 +17,9 @@ O mecanismo de ruído cobre apenas respostas constituídas por uma contagem
 inteira não negativa, sob a hipótese de sensibilidade 1. Texto livre passa por
 NER, **não por privacidade diferencial**. Não existe orçamento acumulado de
 privacidade, controle institucional de peers ou avaliação formal de anonimização
-neste protótipo. Não use dados reais. A resposta de demonstração do RAG em falhas
-continua sendo simulada, não evidência clínica.
+neste protótipo. Não use dados reais. Falhas de inicialização ou inferência do
+RAG retornam indisponibilidade explícita, sem inventar uma resposta clínica nem
+registrar o texto de exceções de terceiros.
 
 Regressões isoladas, com motores e transporte simulados:
 
@@ -44,7 +45,7 @@ As comunicacoes e a consolidacao do conhecimento inter-hospitalar ocorrem de for
 1. Nos Descentralizados (Hospitais): Cada no opera de forma independente em seu ambiente local, contendo sua propria base de dados vetorial e motor RAG. O isolamento e a seguranca operacional precisam ser configurados e avaliados separadamente.
 2. Privacy Shield: Antes de qualquer requisicao ser distribuida para a rede, o Microsoft Presidio analisa a string e substitui entidades detectadas. Identificadores nao reconhecidos podem permanecer no texto.
 3. P2P Mesh Network: A conexao inter-institucional dispensa APIs REST tradicionais, utilizando a infraestrutura peer-to-peer criptografada do `libp2p`.
-4. Mecanismo de Tolerancia a Falhas: Caso o motor de inferencia local (Ollama) falhe por limitacoes de hardware (ex: ausencia de instrucoes AVX), a camada de rede se mantem resiliente atraves de um fallback responsivo, produzindo uma resposta simulada. Isso nao comprova disponibilidade do sistema nem resposta clinica valida.
+4. Falhas de inferência: Se a inicialização ou consulta ao motor local falhar, a resposta informa indisponibilidade. A rede não recebe uma afirmação médica fabricada para substituir a falha; isso não comprova disponibilidade nem qualidade clínica.
 
 ## Pre-requisitos e Instalacao
 
